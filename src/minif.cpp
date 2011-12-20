@@ -24,74 +24,65 @@ PFLT_CALLBACK_DATA CallbackData;
 
 extern "C" NTSTATUS NTAPI DriverEntry(
 	__in PDRIVER_OBJECT DriverObject,
-    __in PUNICODE_STRING RegistryPath
+        __in PUNICODE_STRING RegistryPath
 	) {
 
 		UNICODE_STRING uniS;
 		//PCWSTR portName;
 		OBJECT_ATTRIBUTES InitializedAttributes;
-        UNICODE_STRING ObjectName;
-        PSECURITY_DESCRIPTOR SecurityDescriptor;
+                UNICODE_STRING ObjectName;
+                PSECURITY_DESCRIPTOR SecurityDescriptor;
 		PLIST pList;
 
 		__try {
 
 		StructMinifilter.MaxAllocation = DEFAULT_MAX_RECORDS_TO_ALLOCATE;
-        StructMinifilter.Allocated = 0;
+                StructMinifilter.Allocated = 0;
 
 		InitializeListHead(&StructMinifilter.Head);
-        KeInitializeSpinLock(&StructMinifilter.SpinLock);  
+                KeInitializeSpinLock(&StructMinifilter.SpinLock);  
 		
 		ExInitializeNPagedLookasideList(&StructMinifilter.BufferAvailable,
-			                            NULL,
-										NULL,
-										0,
-										ENTRY_SIZE,
-										POOL_TAG,
-										0);
+			                        NULL, NULL, 0, ENTRY_SIZE,
+						POOL_TAG, 0);
 			
 		ntstatus = FltRegisterFilter(DriverObject,                        
-                                     &FilterRegistration,                 
-                                     &StructMinifilter.Filter);         
+                                             &FilterRegistration,                 
+                                             &StructMinifilter.Filter);         
 
 		
 		if (!NT_SUCCESS(ntstatus)) {   
 
 			DbgPrint("FltRegisterFilter failed with code: %08x\n", ntstatus);
-
-			__leave; } 
+                    	__leave; } 
 
 		ntstatus = FltBuildDefaultSecurityDescriptor(&SecurityDescriptor, FLT_PORT_ALL_ACCESS);
 
 		if(!NT_SUCCESS(ntstatus)) {
 
 			DbgPrint("Cannot build security descriptor\n");
+                  	__leave; }
 
-			__leave; }
-
-        RtlInitUnicodeString(&ObjectName, L"\\PortName");
+                RtlInitUnicodeString(&ObjectName, L"\\PortName");
 
 		InitializeObjectAttributes(&InitializedAttributes,
-			                       &ObjectName,
-								   OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE,  
-								   NULL,
-								   SecurityDescriptor);
+			                   &ObjectName,
+					   OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE,  
+					   NULL, SecurityDescriptor);
 
 		ntstatus = FltCreateCommunicationPort(StructMinifilter.Filter,
-                                              &StructMinifilter.ServerPort,   
-											  &InitializedAttributes,
-											  NULL,
-											  ConnectNotifyCallback,      
-											  DisconnectNotifyCallback,   
-											  (PFLT_MESSAGE_NOTIFY)MessageNotifyCallback,
-											  1);
+                                                      &StructMinifilter.ServerPort,   
+						      &InitializedAttributes,
+						      NULL,
+						      ConnectNotifyCallback,      
+						      DisconnectNotifyCallback,   
+						      (PFLT_MESSAGE_NOTIFY)MessageNotifyCallback,  1);
 		
-	    FltFreeSecurityDescriptor(SecurityDescriptor);  
+	      FltFreeSecurityDescriptor(SecurityDescriptor);  
 
 		if(!NT_SUCCESS(ntstatus)) {
 
 			DbgPrint("Cannot create communication port\n");
-
 			__leave; }
 
 		ntstatus = FltStartFiltering(StructMinifilter.Filter);  }
@@ -139,7 +130,7 @@ extern "C" VOID NTAPI DisconnectNotifyCallback(
 		PAGED_CODE();
 
 		FltCloseClientPort(StructMinifilter.Filter, 
-			               &StructMinifilter.ClientPort);
+			           &StructMinifilter.ClientPort);
 
 
 }
@@ -185,8 +176,8 @@ extern "C" NTSTATUS NTAPI InstanceQueryTeardownCallback(
 
 extern "C" FLT_PREOP_CALLBACK_STATUS NTAPI PreCreate(
 	__inout PFLT_CALLBACK_DATA CallbackData,        
-    __in PCFLT_RELATED_OBJECTS FltObjects,
-    __deref_out_opt PVOID *CompletionContext
+        __in PCFLT_RELATED_OBJECTS FltObjects,
+        __deref_out_opt PVOID *CompletionContext
     ) {
 
 		PLIST list;
@@ -228,22 +219,16 @@ extern "C" FLT_POSTOP_CALLBACK_STATUS NTAPI PostCreate(
 		DbgPrint("PostCreate\n");
 
 		if (!NT_SUCCESS(CallbackData->IoStatus.Status)) {
-
-		DbgPrint("Ops\n");
-
-        return FLT_POSTOP_FINISHED_PROCESSING; }   
+                return FLT_POSTOP_FINISHED_PROCESSING; }   
 
 		list = (PLIST)CompletionContext;
 
 		if (FlagOn(Flags, FLTFL_POST_OPERATION_DRAINING)) {
-
-		DbgPrint("No driver instances\n");
-
-        FreeRecordData(list);
-        return FLT_POSTOP_FINISHED_PROCESSING; }
+		DbgPrint("No driver instances\n");  
+                FreeRecordData(list);
+                return FLT_POSTOP_FINISHED_PROCESSING; }
 
 		Log(list); 
-
 		return FLT_POSTOP_FINISHED_PROCESSING;
 
 }
@@ -272,7 +257,7 @@ extern "C" NTSTATUS NTAPI MessageNotifyCallback(
 
 		    __except(EXCEPTION_EXECUTE_HANDLER) {
 
-            return GetExceptionCode(); }
+                return GetExceptionCode(); }
 
 			switch(command) {
 
@@ -282,22 +267,16 @@ extern "C" NTSTATUS NTAPI MessageNotifyCallback(
 
 					DbgPrint("Empty buffer!\n");
 
-                    ntstatus = STATUS_INVALID_PARAMETER;
-                    break;
-
-                }
+                                        ntstatus = STATUS_INVALID_PARAMETER;
+                                        break;  }
 
 				ntstatus = PrepareLogBuffer(OutputBuffer,
-					                        OutputBufferSize);
+					                    OutputBufferSize);
 
 				break;
 				
 			case about:
-
-				DbgPrint("About\n");
-
 				ntstatus = STATUS_SUCCESS;
-
 				break;
 
 			} }
@@ -306,7 +285,6 @@ extern "C" NTSTATUS NTAPI MessageNotifyCallback(
 		else {
 
 			DbgPrint("No input buffer!\n");
-
 			ntstatus = STATUS_INVALID_PARAMETER; }
 
 		return ntstatus;
@@ -333,12 +311,12 @@ PLIST AllocateBuffer(
 
 		else {
 			
-            newRecordFlagValue = FLAG_NO_MORE_ROOMS_FOR_MEM;
+                        newRecordFlagValue = FLAG_NO_MORE_ROOMS_FOR_MEM;
 			buffer = NULL; } 
 
-        *FlagValue = newRecordFlagValue;
+               *FlagValue = newRecordFlagValue;
 
-        return buffer;
+               return buffer;
 
 }
 
@@ -357,7 +335,7 @@ PLIST AllocateRecordData(
 	ULONG iFlagValue;
 	PLIST Entry;
 
-    Entry = AllocateBuffer(&iFlagValue);
+        Entry = AllocateBuffer(&iFlagValue);
 
 	if(Entry == NULL) { 
 
@@ -371,9 +349,9 @@ PLIST AllocateRecordData(
 
 		Entry->LogRecord.FlagValue = iFlagValue;
 		Entry->LogRecord.Length = sizeof(LOG_RECORD);
-        RtlZeroMemory(&Entry->LogRecord.Data, sizeof(RECORD_DATA)); } 
+                RtlZeroMemory(&Entry->LogRecord.Data, sizeof(RECORD_DATA)); } 
 
-    return Entry;
+       return Entry;
 }
 
 VOID FreeRecordData(
@@ -385,9 +363,7 @@ VOID FreeRecordData(
 		ASSERT(StructMinifilter.UsingStaticBuffer);
 		StructMinifilter.UsingStaticBuffer = FALSE; }
 
-	else {
-
-		FreeAllocatedBuffer(Entry); }
+	else {   	FreeAllocatedBuffer(Entry);        }
 
 }
 
@@ -409,9 +385,8 @@ VOID PreLog(
 
 }
 
-VOID Log(
-	__in PLIST pList
-	) {
+VOID Log
+(__in PLIST pList) {
 
 		KIRQL OldIrql;
 		KeAcquireSpinLock(&StructMinifilter.SpinLock, 
@@ -464,21 +439,21 @@ NTSTATUS PrepareLogBuffer (
 			__try {
             
 			    RtlCopyMemory(BufferForUser, 
-					          pLogRecord, 
-							  pLogRecord->Length);
+					  pLogRecord, 
+				          pLogRecord->Length);
 
 			}
 
 			__except (EXCEPTION_EXECUTE_HANDLER) {
 
 				KeAcquireSpinLock(&StructMinifilter.SpinLock, 
-					              &OldIrql);
+					          &OldIrql);
 
 				InsertHeadList(&StructMinifilter.Head, 
-					           pList);
+					       pList);
 
 				KeReleaseSpinLock(&StructMinifilter.SpinLock, 
-					              OldIrql); 
+					          OldIrql); 
 			    
 			    return GetExceptionCode(); }
 
@@ -489,10 +464,10 @@ NTSTATUS PrepareLogBuffer (
 			FreeRecordData(pListForUser);
 
 			KeAcquireSpinLock(&StructMinifilter.SpinLock, 
-				              &OldIrql); }
+				          &OldIrql); }
 
-		KeReleaseSpinLock(&StructMinifilter.SpinLock, 
-			              OldIrql);
+		        KeReleaseSpinLock(&StructMinifilter.SpinLock, 
+			                  OldIrql);
 
 		if (bytesOutput == NULL) {
 
@@ -506,8 +481,8 @@ NTSTATUS PrepareLogBuffer (
 
 }
 
-VOID FreeLogBuffer(
-	) {
+VOID FreeLogBuffer
+() {
 
 		PLIST_ENTRY pList;
 		KIRQL OldIrql;
@@ -517,20 +492,15 @@ VOID FreeLogBuffer(
 					      &OldIrql);
 
 		while(!IsListEmpty(&StructMinifilter.Head)) {
-
-			pList = RemoveHeadList(&StructMinifilter.Head);
+	
+	                pList = RemoveHeadList(&StructMinifilter.Head);
 
 			KeReleaseSpinLock(&StructMinifilter.SpinLock, 
 			                  OldIrql);
-
-			pRecord = CONTAINING_RECORD(pList,
-				                        LIST, 
-										ListEntry);
-				                        
+			pRecord = CONTAINING_RECORD(pList, LIST, ListEntry);				                        
 			FreeRecordData(pRecord);
-
 			KeAcquireSpinLock(&StructMinifilter.SpinLock, 
-					          &OldIrql);
+					  &OldIrql);
 
 		}
 
