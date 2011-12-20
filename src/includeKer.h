@@ -23,7 +23,7 @@ typedef struct _STRUCT_MINIFILTER {
 
 	NPAGED_LOOKASIDE_LIST BufferAvailable;
 	LONG MaxAllocation;
-    __volatile LONG Allocated;  
+        __volatile LONG Allocated;  
 
 	PVOID StaticBuffer[MAX_SPACE/sizeof(PVOID)];
 
@@ -125,7 +125,7 @@ VOID FreeRecordData(
 
 VOID PreLog(
     __inout PLIST pList,
-	__inout PFLT_CALLBACK_DATA CallbackData
+    __inout PFLT_CALLBACK_DATA CallbackData
 	);
 
 VOID Log(
@@ -143,17 +143,17 @@ const _FLT_OPERATION_REGISTRATION  OperationRegistration[] = {
 
 	{ IRP_MJ_CREATE,
 	  0,
-      PreCreate,
+          PreCreate,
 	  PostCreate },
 
 	  { IRP_MJ_WRITE,
 	  0,
-      PreCreate,
+          PreCreate,
 	  PostCreate },
 
 	  { IRP_MJ_READ,
 	  0,
-      PreCreate,
+          PreCreate,
 	  PostCreate },
 
 	{ IRP_MJ_OPERATION_END }
